@@ -24,7 +24,7 @@ services:
       - ${IMPORT_DIR}:/import  
       - ./import.sh:/import.sh:ro
     entrypoint: ["/bin/bash", "-lc"]
-    command: ["/import.sh"]
+    command: ["/scripts/import.sh"]
 
   backup:
     image: alpine:3.23
@@ -32,11 +32,10 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     volumes:
       - neo4j_data:/volume-source
-      - ${BACKUP_DIR}:/host-backup  
+      - ${BACKUP_DIR}:/host-backup 
+      - ../scripts/backup.sh:/scripts/backup.sh:ro 
     working_dir: /host-backup
-    command: >
-      tar czf neo4j_data_backup_$(date +%Y%m%d%H%M%S).tar.gz -C /volume-source . &&
-      docker exec neo4j neo4j-admin dump --to /host-backup/neo4j.dump
+    command: ["sh /scripts/backup.sh"]
 
 volumes:
   neo4j_data:
