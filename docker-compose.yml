@@ -1,0 +1,42 @@
+services:
+  neo4j:
+    image: neo4j:${NEO4J_VERSION:-5.18}
+    container_name: ${NEO4J_CONTAINER:-neo4j-microbekg}
+    ports:
+      - "${HTTP_PORT:-7474}:7474"    
+      - "${BOLT_PORT:-7687}:7687"    
+    environment:
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_server_memory_heap_max__size=${HEAP_MAX:-4G}
+      - NEO4J_AUTH=${NEO4J_AUTH:-none}
+    volumes:
+      - neo4j_data:/data
+    restart: unless-stopped
+
+  importer:
+    image: neo4j:${NEO4J_VERSION:-5.18}
+    profiles: ["import"]
+    user: "neo4j"
+    environment:
+      - NEO4J_dbms_memory_off_heap_max__size=${OFFHEAP_MAX:-4G}
+    volumes:
+      - neo4j_data:/data
+      - ${IMPORT_DIR}:/import  
+      - ./import.sh:/import.sh:ro
+    entrypoint: ["/bin/bash", "-lc"]
+    command: ["/import.sh"]
+
+  backup:
+    image: alpine:3.23
+    profiles: ["backup"]
+    entrypoint: ["/bin/sh", "-c"]
+    volumes:
+      - neo4j_data:/volume-source
+      - ${BACKUP_DIR}:/host-backup  
+    working_dir: /host-backup
+    command: >
+      tar czf neo4j_data_backup_$(date +%Y%m%d%H%M%S).tar.gz -C /volume-source . &&
+      docker exec neo4j neo4j-admin dump --to /host-backup/neo4j.dump
+
+volumes:
+  neo4j_data:
