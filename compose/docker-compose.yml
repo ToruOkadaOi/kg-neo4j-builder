@@ -22,9 +22,9 @@ services:
     volumes:
       - neo4j_data:/data
       - ${IMPORT_DIR}:/import  
-      - ./import.sh:/import.sh:ro
+      - ../scripts/import.sh:/import.sh:ro
     entrypoint: ["/bin/bash", "-lc"]
-    command: ["/scripts/import.sh"]
+    command: ["/import.sh"]
 
   backup:
     image: alpine:3.23
@@ -33,9 +33,9 @@ services:
     volumes:
       - neo4j_data:/volume-source
       - ${BACKUP_DIR}:/host-backup 
-      - ../scripts/backup.sh:/scripts/backup.sh:ro 
+      - ../scripts/backup.sh:/backup.sh:ro 
     working_dir: /host-backup
-    command: ["sh /scripts/backup.sh"]
+    command: ["sh /backup.sh"]
 
 volumes:
   neo4j_data:
